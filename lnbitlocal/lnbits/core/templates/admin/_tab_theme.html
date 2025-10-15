@@ -1,0 +1,210 @@
+<q-tab-panel name="site_customisation">
+  <q-card-section class="q-pa-none">
+    <h6 class="q-my-none"><span v-text="$t('ui_management')"></span></h6>
+    <br />
+    <div>
+      <div class="row q-col-gutter-md">
+        <div class="col-12 col-md-5">
+          <p><span v-text="$t('ui_site_title')"></span></p>
+          <q-input
+            filled
+            type="text"
+            v-model="formData.lnbits_site_title"
+            :label="$t('ui_site_title') + $t('ui_changing_remove_lnbits_elements')"
+          ></q-input>
+          <br />
+        </div>
+        <div class="col-12 col-md-5">
+          <p><span v-text="$t('ui_site_tagline')"></span></p>
+          <q-input
+            filled
+            type="text"
+            v-model="formData.lnbits_site_tagline"
+            :label="$t('ui_site_tagline')"
+          ></q-input>
+          <br />
+        </div>
+        <div class="col-12 col-md-2 q-mt-xl">
+          <q-toggle
+            :tip="$t('ui_toggle_elements_tip')"
+            v-model="formData.lnbits_show_home_page_elements"
+            :label="formData.lnbits_show_home_page_elements ? $t('ui_elements_enable') : $t('ui_elements_disable')"
+          ></q-toggle>
+        </div>
+      </div>
+
+      <div>
+        <p><span v-text="$t('ui_site_description')"></span></p>
+        <q-input
+          v-model="formData.lnbits_site_description"
+          filled
+          type="textarea"
+          :hint="$t('ui_site_description_hint')"
+        />
+      </div>
+      <br />
+      <div class="row q-col-gutter-md">
+        <div class="col-12 col-md-4">
+          <p><span v-text="$t('ui_default_wallet_name')"></span></p>
+          <q-input
+            filled
+            type="text"
+            v-model="formData.lnbits_default_wallet_name"
+            :label="$t('lnbits_wallet')"
+          ></q-input>
+        </div>
+        <div class="col-12 col-md-4">
+          <p><span v-text="$t('ui_qr_code_logo')"></span></p>
+          <q-input
+            filled
+            type="text"
+            v-model="formData.lnbits_qr_logo"
+            label="https://example.com/image.svg"
+            :hint="$t('ui_qr_code_logo_hint')"
+          ></q-input>
+        </div>
+      </div>
+      <div class="row q-col-gutter-md q-mt-md">
+        <div class="col-12 col-md-6">
+          <p><span v-text="$t('ui_custom_badge')"></span></p>
+          <div class="row q-col-gutter-md">
+            <div class="col-12 col-md-8">
+              <q-input
+                filled
+                type="text"
+                tip="Custom Badge"
+                v-model.trim="formData.lnbits_custom_badge"
+                :label="$t('ui_custom_badge_label')"
+              ></q-input>
+            </div>
+            <div class="col-12 col-md-4">
+              <q-select
+                filled
+                v-model="formData.lnbits_custom_badge_color"
+                :options="colors"
+                :label="$t('ui_custom_badge_color_label')"
+              ></q-select>
+            </div>
+          </div>
+        </div>
+        <div class="col-12 col-md-6">
+          <p><span v-text="$t('ui_custom_image')"></span></p>
+          <q-input
+            filled
+            type="text"
+            tip="Custom Image"
+            v-model.trim="formData.lnbits_custom_image"
+            :label="$t('ui_custom_image_label')"
+            :hint="$t('ui_custom_image_hint')"
+          ></q-input>
+        </div>
+      </div>
+      <br />
+      <div class="row q-col-gutter-md">
+        <div class="col-12 col-md-6">
+          <p><span v-text="$t('themes')"></span></p>
+          <q-select
+            filled
+            v-model="formData.lnbits_theme_options"
+            multiple
+            :hint="$t('themes_hint')"
+            :options="lnbits_theme_options"
+            :label="$t('themes')"
+          ></q-select>
+          <br />
+        </div>
+        <div class="col-12 col-md-6">
+          <p><span v-text="$t('custom_logo')"></span></p>
+          <q-input
+            filled
+            type="text"
+            v-model="formData.lnbits_custom_logo"
+            label="https://example.com/image.png"
+            :hint="$t('custom_logo_hint')"
+          ></q-input>
+          <br />
+        </div>
+      </div>
+      <div class="row q-col-gutter-md">
+        <div class="col-12 col-md-6">
+          <p><span v-text="$t('ad_space_title')"></span></p>
+          <q-input
+            filled
+            type="text"
+            v-model="formData.lnbits_ad_space_title"
+            :label="$t('ad_space_title_label')"
+          ></q-input>
+          <br />
+        </div>
+        <div class="col-12 col-md-6">
+          <p><span v-text="$t('ad_slots')"></span></p>
+          <q-input
+            class="q-mb-md"
+            filled
+            v-model="formData.lnbits_ad_space"
+            type="text"
+            :label="$t('ad_slots_label')"
+            :hint="$t('ad_slots_hint')"
+            ><q-tooltip>
+              format {url};{img-light};{img-dark},{url};{img-light};{img-dark}"
+            </q-tooltip>
+          </q-input>
+          <q-toggle
+            v-model="formData.lnbits_ad_space_enabled"
+            :label="formData.lnbits_ad_space_enabled ? $t('ads_enabled') : $t('ads_disabled')"
+          />
+          <br />
+        </div>
+      </div>
+      <div class="row q-col-gutter-md q-my-md">
+        <div class="col-12" v-text="$t('ui_default_theme')"></div>
+        <div class="col-12 col-sm-6 col-lg-3">
+          <q-select
+            v-model="formData.lnbits_default_border"
+            :options="globalBorderOptions"
+            label="Border"
+            @update:model-value="applyGlobalBorder"
+          >
+          </q-select>
+        </div>
+        <div class="col-12 col-sm-6 col-lg-3">
+          <q-select
+            v-model="formData.lnbits_default_theme"
+            :options="lnbits_theme_options"
+            label="Theme"
+            @update:model-value="applyGlobalTheme"
+          >
+          </q-select>
+        </div>
+        <div class="col-12 col-sm-6 col-lg-3">
+          <q-select
+            v-model="formData.lnbits_default_reaction"
+            :options="reactionOptions"
+            label="Payment reaction"
+            @update:model-value="applyGlobalReaction"
+          >
+          </q-select>
+        </div>
+        <div class="col-12 col-sm-6 col-lg-3">
+          <q-input
+            type="text"
+            v-model="formData.lnbits_default_bgimage"
+            label="Background Image"
+            @update:model-value="applyGlobalBgimage"
+            hint="This must be a trusted source. It can change the content and it can log your IP address."
+          >
+          </q-input>
+        </div>
+        <div class="col-12 col-sm-6 col-lg-3">
+          <q-toggle
+            type="bool"
+            v-model="formData.lnbits_default_gradient"
+            color="primary"
+            label="Gradient Background"
+          >
+          </q-toggle>
+        </div>
+      </div>
+    </div>
+  </q-card-section>
+</q-tab-panel>

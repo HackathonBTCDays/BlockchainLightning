@@ -1,0 +1,72 @@
+name: tests
+
+on:
+  workflow_call:
+    inputs:
+      custom-pytest:
+        description: "Custom pytest arguments"
+        required: true
+        type: string
+      python-version:
+        default: "3.10"
+        type: string
+      os-version:
+        default: "ubuntu-24.04"
+        type: string
+      db-url:
+        default: ""
+        type: string
+      db-name:
+        default: "lnbits"
+        type: string
+    secrets:
+      CODECOV_TOKEN:
+        required: true
+
+jobs:
+  tests:
+    runs-on: ${{ inputs.os-version }}
+
+    services:
+      postgres:
+        image: postgres:latest
+        env:
+          POSTGRES_USER: lnbits
+          POSTGRES_PASSWORD: lnbits
+          POSTGRES_DB: ${{ inputs.db-name }}
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ./.github/actions/prepare
+        with:
+          python-version: ${{ inputs.python-version }}
+
+      - name: Run pytest
+        uses: pavelzw/pytest-action@v2
+        env:
+          LNBITS_DATABASE_URL: ${{ inputs.db-url }}
+          LNBITS_BACKEND_WALLET_CLASS: FakeWallet
+          PYTHONUNBUFFERED: 1
+          DEBUG: true
+        with:
+          verbose: true
+          job-summary: true
+          emoji: false
+          click-to-expand: true
+          custom-pytest: ${{ inputs.custom-pytest }}
+          report-title: "test (${{ inputs.python-version }}, ${{ inputs.db-url }})"
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          file: ./coverage.xml
+          token: ${{ secrets.CODECOV_TOKEN }}
+          verbose: false

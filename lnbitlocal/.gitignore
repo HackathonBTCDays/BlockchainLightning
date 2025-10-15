@@ -1,0 +1,64 @@
+.DS_Store
+._*
+
+__pycache__
+*.py[cod]
+*$py.class
+.mypy_cache
+.vscode
+*-lock.json
+.python-version
+
+*.egg
+*.egg-info
+.coverage
+.coverage.*
+.pytest_cache
+.webassets-cache
+htmlcov
+test-reports
+tests/data/*.sqlite3
+
+*.swo
+*.swp
+*.pyo
+*.pyc
+*.env
+.env
+.pre-commit-config.yaml
+
+data
+*.sqlite3
+.pyre*
+
+__bundle__
+
+coverage.xml
+node_modules
+lnbits/static/bundle.js
+lnbits/static/bundle-components.js
+lnbits/static/bundle.css
+lnbits/static/bundle.min.js.old
+lnbits/static/bundle.min.css.old
+lnbits/static/bundle-components.min.js.old
+lnbits/upgrades
+docker
+
+# Nix
+*result*
+
+# fly.io
+fly.toml
+
+lnbits-backup.zip
+
+# Ignore extensions (post installable extension PR)
+/lnbits/extensions
+/lnbits/upgrades/
+
+# builded python package
+dist
+
+# jetbrains
+.idea
+.venv

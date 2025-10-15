@@ -1,0 +1,51 @@
+name: prepare
+
+inputs:
+  python-version:
+    description: "Python Version"
+    required: true
+    default: "3.10"
+  node-version:
+    description: "Node Version"
+    default: "20.x"
+  npm:
+    description: "use npm"
+    default: false
+    type: boolean
+
+
+runs:
+  using: "composite"
+  steps:
+    - name: Set up Python ${{ inputs.python-version }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ inputs.python-version }}
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v6
+      with:
+        enable-cache: true
+        python-version: ${{ inputs.python-version }}
+
+    - name: Install the project dependencies
+      shell: bash
+      run: uv sync --locked --all-extras --dev
+
+    - name: Use Node.js ${{ inputs.node-version }}
+      if: ${{ (inputs.npm == 'true') }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ inputs.node-version }}
+
+    - uses: actions/cache@v4
+      if: ${{ (inputs.npm == 'true') }}
+      name: Define a cache for the npm based on the dependencies lock file
+      with:
+        path: ./node_modules
+        key: npm-${{ hashFiles('package-lock.json') }}
+
+    - name: Install npm packages
+      if: ${{ (inputs.npm == 'true') }}
+      shell: bash
+      run: npm install

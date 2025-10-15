@@ -1,0 +1,11 @@
+title: "LNbits docs"
+remote_theme: pmarsceill/just-the-docs
+color_scheme: dark
+logo: "/logos/lnbits-full-inverse.png"
+search_enabled: true
+url: https://docs.lnbits.org
+aux_links:
+  "LNbits on GitHub":
+    - "//github.com/lnbits/lnbits"
+  "lnbits.com":
+    - "//lnbits.com"
