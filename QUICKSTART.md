@@ -22,7 +22,10 @@ cp .env.example .env
 
 # 4. Edit .env with your LNbits keys
 # Get keys from: https://legend.lnbits.com
-nano .env
+# Use your preferred text editor:
+# - macOS/Linux: nano .env (or vim .env)
+# - Windows: notepad .env
+# - Or use VS Code: code .env
 
 # 5. Start the server
 npm run dev
@@ -65,7 +68,9 @@ npm run android
 cd backend
 
 # Run test script
+# Unix/Linux/macOS:
 ./test-api.sh
+# Windows: Use Git Bash or WSL to run the script
 ```
 
 Expected output:
@@ -88,9 +93,17 @@ Expected output:
 ### Backend won't start
 
 **Error: Port 3000 already in use**
+
+Unix/Linux/macOS:
 ```bash
 lsof -i :3000
 kill -9 <PID>
+```
+
+Windows:
+```bash
+netstat -ano | findstr :3000
+taskkill /PID <PID> /F
 ```
 
 **Error: Cannot find module**
@@ -108,11 +121,24 @@ npm install
 - Use `http://10.0.2.2:3000/api` in config
 
 **Physical Device:**
-```bash
-# Find your computer's IP
-ifconfig | grep "inet " | grep -v 127.0.0.1
 
-# Update mobile/src/config/config.js
+Find your computer's IP address:
+
+macOS/Linux:
+```bash
+ifconfig | grep "inet " | grep -v 127.0.0.1
+# or on modern Linux:
+ip addr show | grep "inet " | grep -v 127.0.0.1
+```
+
+Windows:
+```bash
+ipconfig
+# Look for IPv4 Address under your network adapter
+```
+
+Then update mobile/src/config/config.js:
+```javascript
 export const API_BASE_URL = 'http://YOUR_IP:3000/api';
 ```
 
