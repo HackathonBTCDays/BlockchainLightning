@@ -1,0 +1,32 @@
+services:
+  lnbits:
+    build: .
+    #LNbits service
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./data:/app/data
+      - ./.env:/app/.env
+    environment:
+      - FLASK_ENV=production
+      - FLASK_APP=lnbits
+      - LNBITS_CONFIG=/app/.env
+      - LNBITS_DATA_FOLDER=/app/data
+    restart: unless-stopped
+        # Commande par défaut du Dockerfile suffit, donc pas besoin de "command"
+    #command: .venv/bin/flask run --host=0.0.0.0
+    depends_on:
+      - redis
+  redis:
+    image: redis:alpine
+    volumes:
+      - ./data/redis:/data
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5

@@ -1,0 +1,66 @@
+    expose:
+      - "6379"
+    networks:
+      - lnbits-network
+networks:
+  lnbits-network:
+    driver: bridge
+    driver_opts:
+      com.docker.network.bridge.name: lnbits-bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+          gateway: 172.20.0.1
+        - subnet: 2001:db8:1::/64
+          gateway: 2001:db8:1::1
+      options:
+        com.docker.network.enable_ipv6: "true"
+        com.docker.network.mtu: "1450"
+        com.docker.network.bridge.enable_icc: "true"
+        com.docker.network.bridge.enable_ip_masquerade: "true"
+        com.docker.network.bridge.host_binding_ipv4: "172.20.0.1"
+        com.docker.network.bridge.name: "lnbits-bridge"
+        com.docker.network.driver.mtu: "1450"
+        com.docker.network.driver.overlay.vxlanid_list: "4096"
+        com.docker.network.driver.overlay.vxlan_port: "4789"
+        com.docker.network.driver.overlay.vxlan_iface: "eth0"
+        com.docker.network.driver.overlay.vxlan_ttl: "64"
+        com.docker.network.driver.overlay.vxlan_learning: "true"
+        com.docker.network.driver.overlay.vxlan_udp6: "false"
+        com.docker.network.driver.overlay.vxlan_multicast: "false"
+        com.docker.network.driver.overlay.vxlan_group: "239.0.0.1"
+        com.docker.network.driver.overlay.vxlan_port_min: "4789"
+        com.docker.network.driver.overlay.vxlan_port_max: "4790"
+        com.docker.network.driver.overlay.vxlan_rsc: "true"
+        com.docker.network.driver.overlay.vxlan_rsc_ttl: "64"
+        com.docker.network.driver.overlay.vxlan_rsc_learning: "true"
+        com.docker.network.driver.overlay.vxlan_rsc_udp6: "false"
+        com.docker.network.driver.overlay.vxlan_rsc_multicast: "false"
+        com.docker.network.driver.overlay.vxlan_rsc_group: "239.0.0.1"
+        com.docker.network.driver.overlay.vxlan_rsc_port_min: "4789"
+        com.docker.network.driver.overlay.vxlan_rsc_port_max: "4790"
+        com.docker.network.driver.overlay.vxlan_rsc_iface: "eth0"
+        com.docker.network.driver.overlay.vxlan_rsc_tos: "0"
+        com.docker.network.driver.overlay.vxlan_rsc_flowlabel: "0"
+        com.docker.network.driver.overlay.vxlan_rsc_gso: "true"
+        com.docker.network.driver.overlay.vxlan_rsc_gro: "true"
+        com.docker.network.driver.overlay.vxlan_rsc_lro: "true"
+        com.docker.network.driver.overlay.vxlan_rsc_rx_checksum: "true"
+        com.docker.network.driver.overlay.vxlan_rsc_tx_checksum: "true" 
+        com.docker.network.driver.overlay.vxlan_rsc_tso: "true"
+        com.docker.network.driver.overlay.vxlan_rsc_ufo: "true"
+        com.docker.network.driver.overlay.vxlan_rsc_gso_max_size: "65536"
+        com.docker.network.driver.overlay.vxlan_rsc_gso_max_segs: "65536"
+        com.docker.network.driver.overlay.vxlan_rsc_gro_max_size: "65536"
+        com.docker.network.driver.overlay.vxlan_rsc_gro_max_segs: "65536"
+        com.docker.network.driver.overlay.vxlan_rsc_lro_max_size: "65536"
+        com.docker.network.driver.overlay.vxlan_rsc_lro_max_segs: "65536"
+        com.docker.network.driver.overlay.vxlan_rsc_rx_checksum_max_size: "65536"
+        com.docker.network.driver.overlay.vxlan_rsc_rx_checksum_max_segs: "65536"
+        com.docker.network.driver.overlay.vxlan_rsc_tx_checksum_max_size: "65536"
+        com.docker.network.driver.overlay.vxlan_rsc_tx_checksum_max_segs: " 65536"
+        com.docker.network.driver.overlay.vxlan_rsc_tso_max_size: "65536"
+        com.docker.network.driver.overlay.vxlan_rsc_tso_max_segs: "65536"
+        com.docker.network.driver.overlay.vxlan_rsc_ufo_max_size: "65536"
+        com.docker.network.driver.overlay.vxlan_rsc_ufo_max_segs: "65536"
+        

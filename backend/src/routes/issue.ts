@@ -1,10 +1,10 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
 const lnbits = require('../services/lnbits');
 const pdf = require('../services/pdf');
 const bitcoin = require('../services/bitcoin');
 
-router.post('/', async (req, res) => {
+router.post('/', async (req: express.Request, res: express.Response) => {
   const { name, birthDate, preimage } = req.body;
   // 1. Vérifier paiement LNbits
   const paid = await lnbits.verifyPayment(preimage);
