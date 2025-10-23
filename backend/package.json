@@ -1,5 +1,5 @@
 {
-  "name": "backend",
+  "name": "dioteko-backend",
   "version": "1.0.0",
   "main": "index.js",
   "type": "module",
@@ -17,10 +17,12 @@
     "bitcoinjs-lib": "^7.0.0",
     "cors": "^2.8.5",
     "crypto-js": "^4.2.0",
+    "body-parser": "^1.20.2",
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
     "pdfkit": "^0.17.2",
-    "qrcode": "^1.5.4"
+    "qrcode": "^1.5.4",
+    "multer": "^1.4.5-lts.1"
   },
   "devDependencies": {
     "nodemon": "^3.1.10"
