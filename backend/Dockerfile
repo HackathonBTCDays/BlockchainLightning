@@ -1,46 +1,31 @@
-FROM python:3.12-slim-bookworm AS builder
+# Backend Dockerfile for Lightning Certificate System
 
-RUN apt-get clean
-RUN apt-get update
-RUN apt-get install -y curl pkg-config build-essential libnss-myhostname automake
+FROM node:18-alpine
 
-RUN curl -LsSf https://astral.sh/uv/install.sh | sh
-ENV PATH="/root/.local/bin:$PATH"
-
+# Set working directory
 WORKDIR /app
 
-# Only copy the files required to install the dependencies
-COPY pyproject.toml uv.lock ./
-RUN touch README.md
+# Install curl for healthcheck
+RUN apk add --no-cache curl
 
-RUN mkdir data
+# Copy package files
+COPY package*.json ./
 
-RUN uv sync --all-extras
+# Install dependencies
+RUN npm ci --only=production
 
-FROM python:3.12-slim-bookworm
-
-# needed for backups postgresql-client version 14 (pg_dump)
-RUN apt-get update && apt-get -y upgrade && \
-    apt-get -y install gnupg2 curl lsb-release && \
-    sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list' && \
-    curl -s https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add - && \
-    apt-get update && \
-    apt-get -y install postgresql-client-14 postgresql-client-common && \
-    apt-get clean all && rm -rf /var/lib/apt/lists/*
-
-RUN curl -LsSf https://astral.sh/uv/install.sh | sh
-ENV PATH="/root/.local/bin:$PATH"
-
-WORKDIR /app
-
+# Copy application code
 COPY . .
-COPY --from=builder /app/.venv .venv
 
-RUN uv sync --all-extras
+# Create certificates directory
+RUN mkdir -p /app/certificates
 
-ENV LNBITS_PORT="5000"
-ENV LNBITS_HOST="0.0.0.0"
+# Expose port
+EXPOSE 3000
 
-EXPOSE 5000
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+  CMD curl -f http://localhost:3000/health || exit 1
 
-CMD ["sh", "-c", "uv run lnbits --port $LNBITS_PORT --host $LNBITS_HOST --forwarded-allow-ips='*'"]
+# Start application
+CMD ["npm", "start"]

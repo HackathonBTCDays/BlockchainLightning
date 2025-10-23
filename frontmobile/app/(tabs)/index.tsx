@@ -24,7 +24,7 @@ const recentCertificates = [
 
 const services = [
   { id: '1', title: 'Extrait de naissance', name: 'Birth Certificate', priceSats: 1000, priceFcfa: 350, image: 'https://cmsphoto.ww-cdn.com/superstatic/16216/art/grande/42887493-35586288.jpg?v=1582029747' },
-  { id: '2', title: 'Casier judiciaire', name: 'Criminal Record', priceSats: 2000, priceFcfa: 700, image: 'https://i.imgur.com/5z1vVzF.png' },
+  { id: '2', title: 'Casier judiciaire', name: 'Criminal Record', priceSats: 2000, priceFcfa: 700, image: 'https://cmsphoto.ww-cdn.com/superstatic/16216/art/grande/42887493-35586288.jpg?v=1582029747' },
 ];
 
 const HomeScreen = () => {
