@@ -45,7 +45,7 @@ app.get('/health', (req, res) => {
 // Route racine
 app.get('/', (req, res) => {
   res.json({
-    message: 'CertiFast API - Système de Certificats Numériques Sécurisés par Blockchain',
+    message: 'DioteKo API - Système de Certificats Numériques Sécurisés par Blockchain',
     version: '1.0.0',
     endpoints: {
       health: '/health',
