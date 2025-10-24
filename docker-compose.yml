@@ -1,0 +1,37 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - LNBITS_URL=${LNBITS_URL:-https://legend.lnbits.com}
+      - LNBITS_ADMIN_KEY=${LNBITS_ADMIN_KEY}
+      - LNBITS_INVOICE_KEY=${LNBITS_INVOICE_KEY}
+      - BITCOIN_NETWORK=${BITCOIN_NETWORK:-testnet}
+      - BITCOIN_RPC_URL=${BITCOIN_RPC_URL:-https://blockstream.info/testnet/api}
+    volumes:
+      - ./backend/certificates:/app/certificates
+      - ./backend/.env:/app/.env
+    restart: unless-stopped
+    networks:
+      - lightning-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+networks:
+  lightning-network:
+    driver: bridge
+
+volumes:
+  certificates:
+    driver: local

@@ -1,7 +1,76 @@
 services:
+  # ---- BITCOIN CORE ----
+  bitcoin:
+    image: ruimarinho/bitcoin-core:23
+    container_name: bitcoin
+    environment:
+      BITCOIN_REGTEST: "1"
+      BITCOIN_RPCUSER: "user"
+      BITCOIN_RPCPASSWORD: "password"
+    ports:
+      - "18443:18443"
+      - "18444:18444"
+    volumes:
+      - bitcoin-data:/home/bitcoin/.bitcoin
+    command: >
+      bash -c "
+        bitcoind -regtest -printtoconsole -rpcallowip=::/0 -rpcbind=0.0.0.0 &&
+        tail -f /dev/null
+      "
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "bitcoin-cli", "-regtest", "getblockchaininfo"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ---- LND ----
+  lnd:
+    image: lightninglabs/lnd:v0.17.1-beta
+    container_name: lnd
+    depends_on:
+      bitcoin:
+        condition: service_healthy
+    environment:
+      BITCOIN_ACTIVE: "1"
+      BITCOIN_REGTEST: "1"
+      BITCOIN_NODE: "bitcoind"
+      BITCOIND_RPCUSER: "user"
+      BITCOIND_RPCPASS: "password"
+      BITCOIND_RPCHOST: "bitcoin"
+      BITCOIND_ZMQPUBRAWBLOCK: "tcp://bitcoin:28332"
+      BITCOIND_ZMQPUBRAWTX: "tcp://bitcoin:28333"
+      LND_ALIAS: "lnbits-node"
+      LND_EXTERNALIP: "lnd"
+    command: >
+      lnd --bitcoin.active --bitcoin.regtest --bitcoin.node=bitcoind
+          --bitcoind.rpchost=bitcoin --bitcoind.rpcuser=user --bitcoind.rpcpass=password
+          --bitcoind.zmqpubrawblock=tcp://bitcoin:28332
+          --bitcoind.zmqpubrawtx=tcp://bitcoin:28333
+          --debuglevel=info
+    ports:
+      - "9735:9735"
+      - "10009:10009"
+      - "8080:8080"
+    volumes:
+      - lnd-data:/root/.lnd
+    restart: unless-stopped
+
+  # ---- REDIS ----
+  redis:
+    image: redis:alpine
+    container_name: redis
+    volumes:
+      - ./data/redis:/data
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    ports:
+      - "6379:6379"
+
+  # ---- LNBITS ----
   lnbits:
     build: .
-    #LNbits service
+    container_name: lnbits
     ports:
       - "5000:5000"
     volumes:
@@ -12,21 +81,13 @@ services:
       - FLASK_APP=lnbits
       - LNBITS_CONFIG=/app/.env
       - LNBITS_DATA_FOLDER=/app/data
-    restart: unless-stopped
-        # Commande par défaut du Dockerfile suffit, donc pas besoin de "command"
-    #command: .venv/bin/flask run --host=0.0.0.0
+      - LNBITS_WALLET_BACKEND=lnd
+      - LND_REST_URL=http://lnd:8080
     depends_on:
       - redis
-  redis:
-    image: redis:alpine
-    volumes:
-      - ./data/redis:/data
+      - lnd
     restart: unless-stopped
-    command: redis-server --appendonly yes
-    ports:
-      - "6379:6379"
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+
+volumes:
+  bitcoin-data:
+  lnd-data:
