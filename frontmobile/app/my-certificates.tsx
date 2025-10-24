@@ -8,7 +8,7 @@ import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { getAllCertificates } from '@/services/api';
 
-const AllCertificatesScreen = () => {
+const MyCertificatesScreen = () => {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
   const router = useRouter();
@@ -126,4 +126,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default AllCertificatesScreen;
+export default MyCertificatesScreen;

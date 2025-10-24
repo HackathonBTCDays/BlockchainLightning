@@ -15,7 +15,7 @@ export const Card = ({ children, style, ...props }: CardProps) => {
     <View
       style={[
         styles.card,
-        { backgroundColor: colors['surface.default'] },
+        { backgroundColor: colors['bg.muted'] },
         style,
       ]}
       {...props}

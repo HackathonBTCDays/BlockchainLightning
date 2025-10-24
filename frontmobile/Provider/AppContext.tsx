@@ -1,6 +1,8 @@
 import React, { createContext, useState, useContext } from 'react';
 
 type AppContextType = {
+  theme: 'light' | 'dark';
+  setTheme: (theme: 'light' | 'dark') => void;
   selectedCertificateType: string | null;
   setSelectedCertificateType: React.Dispatch<React.SetStateAction<string | null>>;
   userData: Record<string, any>;
@@ -15,6 +17,7 @@ type AppContextType = {
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider = ({ children }: React.PropsWithChildren<{}>) => {
+  const [theme, setTheme] = useState<'light' | 'dark'>('light');
   const [selectedCertificateType, setSelectedCertificateType] = useState<string | null>(null);
   const [userData, setUserData] = useState<Record<string, any>>({});
   const [paymentInfo, setPaymentInfo] = useState<any>(null);
@@ -30,6 +33,8 @@ export const AppProvider = ({ children }: React.PropsWithChildren<{}>) => {
   return (
     <AppContext.Provider
       value={{
+        theme,
+        setTheme,
         selectedCertificateType,
         setSelectedCertificateType,
         userData,

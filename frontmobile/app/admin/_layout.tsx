@@ -30,38 +30,31 @@ export default function TabLayout() {
         ),
       }}>
       <Tabs.Screen
-        name="index"
+        name="AdminDashboardScreen"
         options={{
           title: 'Accueil',
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
         }}
       />
       <Tabs.Screen
-        name="CertificateFormScreen"
+        name="TPoSScreen"
         options={{
-          title: 'Demande',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="doc.text.fill" color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="PaymentScreen"
-        options={{
-          title: 'Payment',
+          title: 'TPoS',
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="creditcard.fill" color={color} />,
         }}
       />
       <Tabs.Screen
-        name="QRScannerScreen"
+        name="UserManagementScreen"
         options={{
-          title: 'Scanner',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="qrcode" color={color} />,
+          title: 'Users',
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="person.2.fill" color={color} />,
         }}
       />
       <Tabs.Screen
-        name="VerificationScreen"
+        name="SupportScreen"
         options={{
-          title: 'Verify',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="checkmark.seal.fill" color={color} />,
+          title: 'Support',
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="questionmark.circle.fill" color={color} />,
         }}
       />
       <Tabs.Screen
