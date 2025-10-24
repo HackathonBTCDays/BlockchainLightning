@@ -1,13 +1,20 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   TextInput,
-  TouchableOpacity,
   ActivityIndicator,
   ScrollView,
+  TouchableOpacity,
 } from 'react-native';
+import { CameraView, useCameraPermissions } from 'expo-camera';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useColorScheme } from '@/hooks/use-color-scheme';
+import { Colors } from '@/constants/theme';
+import { Button } from '@/components/ui/Button';
+import { Card } from '@/components/ui/Card';
+import { IconSymbol } from '@/components/ui/icon-symbol';
 import { verifyCertificate } from '@/services/api';
 
 interface VerificationResult {
@@ -19,27 +26,47 @@ interface VerificationResult {
 }
 
 const VerificationScreen = () => {
+  const [permission, requestPermission] = useCameraPermissions();
+  const [isScannerVisible, setIsScannerVisible] = useState(false);
+  const colorScheme = useColorScheme();
+  const colors = Colors[colorScheme ?? 'light'];
   const [certificateId, setCertificateId] = useState('');
-  const [documentHash, setDocumentHash] = useState('');
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<VerificationResult | null>(null);
-  const [error, setError] = useState<string | null>(null);
 
-  const handleVerify = async () => {
-    if (!certificateId.trim()) {
-      setError('Please enter a certificate ID');
+  
+  const handleScanClick = async () => {
+    if (!permission) {
+      // Camera permissions are still loading.
+      return;
+    }
+
+    if (!permission.granted) {
+      // Camera permissions are not granted yet.
+      const { status } = await requestPermission();
+      if (status !== 'granted') {
+        alert('Camera permission is required to scan QR codes.');
+        return;
+      }
+    }
+
+    setIsScannerVisible(true);
+  };
+
+  const handleVerify = async (id?: string) => {
+    const finalCertificateId = id || certificateId;
+    if (!finalCertificateId.trim()) {
+      setResult({ valid: false, message: 'Please enter a certificate ID', certificateId: '' });
       return;
     }
 
     try {
       setLoading(true);
-      setError(null);
       setResult(null);
-
-      const response = await verifyCertificate(certificateId, documentHash || undefined);
+      const response = await verifyCertificate(finalCertificateId, undefined);
       setResult(response);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An unknown error occurred');
+      setResult({ valid: false, message: err instanceof Error ? err.message : 'An unknown error occurred', certificateId: finalCertificateId });
     } finally {
       setLoading(false);
     }
@@ -47,311 +74,154 @@ const VerificationScreen = () => {
 
   const handleReset = () => {
     setCertificateId('');
-    setDocumentHash('');
     setResult(null);
-    setError(null);
+    setIsScannerVisible(false);
+  };
+
+  const handleBarCodeScanned = ({ data }: { data: string }) => {
+    setIsScannerVisible(false);
+    setCertificateId(data);
+    handleVerify(data);
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Verify Certificate</Text>
-        <Text style={styles.subtitle}>Check authenticity on blockchain</Text>
-      </View>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}>
+      <ScrollView style={styles.container}>
+        <Text style={[styles.title, { color: colors['text.primary'] }]}>Verify Certificate</Text>
+        <Text style={[styles.subtitle, { color: colors['text.secondary'] }]}>
+          Check the authenticity of a certificate on the blockchain.
+        </Text>
 
-      <ScrollView style={styles.content}>
-        <View style={styles.form}>
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Certificate ID *</Text>
-            <TextInput
-              style={styles.input}
-              value={certificateId}
-              onChangeText={setCertificateId}
-              placeholder="Enter certificate ID"
-              placeholderTextColor="#999"
-              autoCapitalize="none"
+        {isScannerVisible ? (
+          <View style={styles.scannerContainer}>
+            <CameraView
+              onBarcodeScanned={handleBarCodeScanned}
+              style={StyleSheet.absoluteFillObject}
             />
+            <Button title="Cancel" onPress={() => setIsScannerVisible(false)} variant="secondary" />
           </View>
-
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Document Hash (Optional)</Text>
-            <TextInput
-              style={styles.input}
-              value={documentHash}
-              onChangeText={setDocumentHash}
-              placeholder="Enter document hash"
-              placeholderTextColor="#999"
-              autoCapitalize="none"
-            />
-          </View>
-
-          {loading ? (
-            <View style={styles.loadingContainer}>
-              <ActivityIndicator size="large" color="#f7931a" />
-              <Text style={styles.loadingText}>Verifying certificate...</Text>
-            </View>
-          ) : (
-            <TouchableOpacity style={styles.verifyButton} onPress={handleVerify}>
-              <Text style={styles.verifyButtonText}>Verify Certificate</Text>
-            </TouchableOpacity>
-          )}
+        ) : (
+          <>
+            <View style={styles.inputContainer}>
+          <TextInput
+            style={[styles.input, { backgroundColor: colors['surface.default'], color: colors['text.primary'] }]}
+            value={certificateId}
+            onChangeText={setCertificateId}
+            placeholder="Enter Certificate ID"
+            placeholderTextColor={colors['text.muted']}
+            autoCapitalize="none"
+          />
         </View>
 
-        {error && (
-          <View style={styles.errorCard}>
-            <Text style={styles.errorIcon}>❌</Text>
-            <Text style={styles.errorTitle}>Verification Failed</Text>
-            <Text style={styles.errorMessage}>{error}</Text>
-            <TouchableOpacity style={styles.resetButton} onPress={handleReset}>
-              <Text style={styles.resetButtonText}>Try Again</Text>
-            </TouchableOpacity>
+        {loading ? (
+          <ActivityIndicator size="large" color={colors['brand.primary']} style={{ marginTop: 20 }} />
+        ) : (
+                    <View>
+            <Button title="Verify Manually" onPress={() => handleVerify()} variant="primary" style={{ marginTop: 12 }} />
+            <Button title="Scan QR Code" onPress={handleScanClick} variant="secondary" style={{ marginTop: 12 }} />
           </View>
         )}
-
-        {result && result.valid && (
-          <View style={styles.successCard}>
-            <Text style={styles.successIcon}>✓</Text>
-            <Text style={styles.successTitle}>Certificate Verified</Text>
-            <Text style={styles.successMessage}>{result.message}</Text>
-
-            <View style={styles.detailsCard}>
-              <Text style={styles.detailsTitle}>Verification Details:</Text>
-              
-              <View style={styles.detailRow}>
-                <Text style={styles.detailLabel}>Certificate ID:</Text>
-                <Text style={styles.detailValue} numberOfLines={1}>
-                  {result.certificateId}
-                </Text>
-              </View>
-
-              {result.documentHash && (
-                <View style={styles.detailRow}>
-                  <Text style={styles.detailLabel}>Document Hash:</Text>
-                  <Text style={styles.detailValue} numberOfLines={1}>
-                    {result.documentHash.substring(0, 16)}...
-                  </Text>
-                </View>
-              )}
-
-              <View style={styles.detailRow}>
-                <Text style={styles.detailLabel}>Status:</Text>
-                <Text style={[styles.detailValue, styles.verified]}>Verified</Text>
-              </View>
-            </View>
-
-            <TouchableOpacity style={styles.resetButton} onPress={handleReset}>
-              <Text style={styles.resetButtonText}>Verify Another</Text>
-            </TouchableOpacity>
-          </View>
+          </>
         )}
 
-        {result && !result.valid && (
-          <View style={styles.errorCard}>
-            <Text style={styles.errorIcon}>❌</Text>
-            <Text style={styles.errorTitle}>Invalid Certificate</Text>
-            <Text style={styles.errorMessage}>
-              {result.error || 'This certificate could not be verified'}
+        
+        {result && (
+          <Card style={[styles.resultCard, { borderColor: result.valid ? colors['state.success.fg'] : colors['state.error.fg'] }]}>
+            <IconSymbol
+              name={result.valid ? 'checkmark.circle.fill' : 'xmark.circle.fill'}
+              size={48}
+              color={result.valid ? colors['state.success.fg'] : colors['state.error.fg']}
+              style={{ marginBottom: 12 }}
+            />
+            <Text style={[styles.resultTitle, { color: result.valid ? colors['state.success.fg'] : colors['state.error.fg'] }]}>
+              {result.valid ? 'Certificate Verified' : 'Verification Failed'}
             </Text>
-            <TouchableOpacity style={styles.resetButton} onPress={handleReset}>
-              <Text style={styles.resetButtonText}>Try Again</Text>
-            </TouchableOpacity>
-          </View>
-        )}
+            <Text style={[styles.resultMessage, { color: colors['text.secondary'] }]}>{result.message}</Text>
 
-        <View style={styles.infoCard}>
-          <Text style={styles.infoTitle}>About Verification</Text>
-          <Text style={styles.infoText}>
-            Certificate verification checks the authenticity of your document against the Bitcoin
-            blockchain. The document hash is anchored on the blockchain, ensuring it cannot be
-            tampered with.
-          </Text>
-        </View>
+            {result.valid && result.documentHash && (
+              <View style={styles.detailsContainer}>
+                <View style={styles.detailRow}>
+                  <Text style={[styles.detailLabel, { color: colors['text.muted'] }]}>Document Hash</Text>
+                  <Text style={[styles.detailValue, { color: colors['text.primary'] }]} numberOfLines={1}>{result.documentHash}</Text>
+                </View>
+              </View>
+            )}
+
+            <Button title="Verify Another" onPress={handleReset} variant="secondary" style={{ marginTop: 20 }} />
+          </Card>
+        )}
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+  },
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
-  },
-  header: {
-    backgroundColor: '#333',
-    padding: 20,
-    paddingTop: 40,
+    padding: 24,
   },
   title: {
-    fontSize: 24,
+    fontSize: 32,
     fontWeight: 'bold',
-    color: '#fff',
-    marginBottom: 5,
+    marginBottom: 8,
   },
   subtitle: {
-    fontSize: 14,
-    color: '#fff',
-    opacity: 0.9,
+    fontSize: 16,
+    marginBottom: 24,
   },
-  content: {
-    flex: 1,
-  },
-  form: {
-    padding: 16,
-  },
-  inputGroup: {
-    marginBottom: 20,
-  },
-  label: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: 8,
+  inputContainer: {
+    marginBottom: 16,
   },
   input: {
-    backgroundColor: '#fff',
-    borderRadius: 8,
-    padding: 12,
+    height: 50,
+    borderRadius: 12,
+    paddingHorizontal: 16,
     fontSize: 16,
-    color: '#333',
-    borderWidth: 1,
-    borderColor: '#ddd',
   },
-  verifyButton: {
-    backgroundColor: '#f7931a',
-    padding: 16,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginTop: 12,
-  },
-  verifyButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  loadingContainer: {
-    alignItems: 'center',
-    padding: 32,
-  },
-  loadingText: {
-    marginTop: 16,
-    fontSize: 16,
-    color: '#666',
-  },
-  successCard: {
-    margin: 16,
-    marginTop: 0,
-    backgroundColor: '#fff',
-    borderRadius: 8,
-    padding: 20,
+  resultCard: {
+    marginTop: 32,
+    padding: 24,
     alignItems: 'center',
     borderWidth: 2,
-    borderColor: '#4caf50',
   },
-  successIcon: {
-    fontSize: 48,
-    color: '#4caf50',
-    marginBottom: 12,
-  },
-  successTitle: {
-    fontSize: 20,
+  resultTitle: {
+    fontSize: 22,
     fontWeight: 'bold',
-    color: '#4caf50',
     marginBottom: 8,
   },
-  successMessage: {
-    fontSize: 14,
-    color: '#666',
+  resultMessage: {
+    fontSize: 16,
     textAlign: 'center',
     marginBottom: 20,
   },
-  errorCard: {
-    margin: 16,
-    marginTop: 0,
-    backgroundColor: '#fff',
-    borderRadius: 8,
-    padding: 20,
-    alignItems: 'center',
-    borderWidth: 2,
-    borderColor: '#f44336',
-  },
-  errorIcon: {
-    fontSize: 48,
-    marginBottom: 12,
-  },
-  errorTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#f44336',
-    marginBottom: 8,
-  },
-  errorMessage: {
-    fontSize: 14,
-    color: '#666',
-    textAlign: 'center',
-    marginBottom: 20,
-  },
-  detailsCard: {
+  detailsContainer: {
     width: '100%',
-    backgroundColor: '#f5f5f5',
-    borderRadius: 8,
-    padding: 16,
-    marginBottom: 20,
-  },
-  detailsTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: 12,
+    marginTop: 12,
+    paddingTop: 12,
+    borderTopWidth: 1,
   },
   detailRow: {
-    marginBottom: 8,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   detailLabel: {
-    fontSize: 12,
-    color: '#666',
-    marginBottom: 4,
+    fontSize: 14,
   },
   detailValue: {
     fontSize: 14,
-    color: '#333',
-    fontFamily: 'monospace',
-  },
-  verified: {
-    color: '#4caf50',
     fontWeight: '600',
   },
-  resetButton: {
-    backgroundColor: '#333',
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 8,
-  },
-  resetButtonText: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  infoCard: {
-    margin: 16,
-    backgroundColor: '#fff',
-    borderRadius: 8,
+  scannerContainer: {
+    height: 300,
+    borderRadius: 12,
+    overflow: 'hidden',
+    marginBottom: 16,
+    justifyContent: 'flex-end',
     padding: 16,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-  },
-  infoTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: 8,
-  },
-  infoText: {
-    fontSize: 14,
-    color: '#666',
-    lineHeight: 20,
   },
 });
 

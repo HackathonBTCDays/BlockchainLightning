@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
+import React, { useState, useCallback, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, RefreshControl, ActivityIndicator } from 'react-native';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Colors } from '@/constants/theme';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -7,128 +7,161 @@ import { useRouter } from 'expo-router';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-
-// Mock data for demonstration
-const certificateStats = {
-  total: { value: 1234, change: '+10%' },
-  valid: { value: 1123, change: '+5%' },
-  pending: { value: 56, change: '-2%' },
-  expiringSoon: { value: 5, change: '+1%' },
-};
-
-const recentCertificates = [
-  { id: '1', name: 'Software Engineering Degree', issuer: 'Tech University', status: 'Verified', image: 'https://img.freepik.com/vecteurs-libre/certificat-luxe-dore-gradient_52683-70557.jpg?semt=ais_hybrid&w=740&q=80' },
-  { id: '2', name: 'Project Management Professional', issuer: 'Global PM Institute', status: 'Verified', image: 'https://img.freepik.com/vecteurs-libre/certificat-luxe-dore-gradient_52683-70557.jpg?semt=ais_hybrid&w=740&q=80' },
-  { id: '3', name: 'Data Science Certification', issuer: 'Data Academy', status: 'Pending', image: 'https://img.freepik.com/vecteurs-libre/certificat-luxe-dore-gradient_52683-70557.jpg?semt=ais_hybrid&w=740&q=80' },
-];
-
-const services = [
-  { id: '1', title: 'Extrait de naissance', name: 'Birth Certificate', priceSats: 1000, priceFcfa: 350, image: 'https://cmsphoto.ww-cdn.com/superstatic/16216/art/grande/42887493-35586288.jpg?v=1582029747' },
-  { id: '2', title: 'Casier judiciaire', name: 'Criminal Record', priceSats: 2000, priceFcfa: 700, image: 'https://cmsphoto.ww-cdn.com/superstatic/16216/art/grande/42887493-35586288.jpg?v=1582029747' },
-];
+import { Timeline } from '@/components/ui/Timeline';
+import { getCertificateStats, getRecentCertificates, getServices } from '@/services/api';
 
 const HomeScreen = () => {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
   const router = useRouter();
+  const [refreshing, setRefreshing] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState<any>(null);
+  const [recentCerts, setRecentCerts] = useState<any[]>([]);
+  const [services, setServices] = useState<any[]>([]);
+
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      const [statsData, certsData, servicesData] = await Promise.all([
+        getCertificateStats(),
+        getRecentCertificates(),
+        getServices(),
+      ]);
+      setStats(statsData);
+      setRecentCerts(certsData as any[]);
+      setServices(servicesData as any[]);
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await fetchData();
+    setRefreshing(false);
+  }, []);
 
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}>
-      <ScrollView style={styles.container}>
+      <ScrollView
+        style={styles.container}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors['text.primary']} />}
+      >
         <View style={styles.header}>
           <Text style={[styles.headerTitle, { color: colors['text.primary'] }]}>Tableau de bord</Text>
         </View>
 
-        {/* Certificate Stats */}
-        <View style={styles.statsContainer}>
-          <Card style={styles.statCard}>
-            <View style={styles.statHeader}>
-              <IconSymbol name="shield.fill" size={20} color={colors['text.secondary']} />
-              <Text style={[styles.statLabel, { color: colors['text.secondary'], marginLeft: 8 }]}>Total Certificates</Text>
-            </View>
-            <Text style={[styles.statValue, { color: colors['text.primary'] }]}>{certificateStats.total.value}</Text>
-            <Text style={[styles.statChange, { color: colors['state.success.fg'] }]}>{certificateStats.total.change}</Text>
-          </Card>
-          <Card style={styles.statCard}>
-            <View style={styles.statHeader}>
-              <IconSymbol name="checkmark.circle" size={20} color={colors['text.secondary']} />
-              <Text style={[styles.statLabel, { color: colors['text.secondary'], marginLeft: 8 }]}>Valid</Text>
-            </View>
-            <Text style={[styles.statValue, { color: colors['text.primary'] }]}>{certificateStats.valid.value}</Text>
-            <Text style={[styles.statChange, { color: colors['state.success.fg'] }]}>{certificateStats.valid.change}</Text>
-          </Card>
-        </View>
-        <View style={styles.statsContainer}>
-          <Card style={styles.statCard}>
-            <View style={styles.statHeader}>
-              <IconSymbol name="hourglass" size={20} color={colors['text.secondary']} />
-              <Text style={[styles.statLabel, { color: colors['text.secondary'], marginLeft: 8 }]}>Pending</Text>
-            </View>
-            <Text style={[styles.statValue, { color: colors['text.primary'] }]}>{certificateStats.pending.value}</Text>
-            <Text style={[styles.statChange, { color: colors['state.error.fg'] }]}>{certificateStats.pending.change}</Text>
-          </Card>
-          <Card style={styles.statCard}>
-            <View style={styles.statHeader}>
-              <IconSymbol name="exclamationmark.triangle" size={20} color={colors['text.secondary']} />
-              <Text style={[styles.statLabel, { color: colors['text.secondary'], marginLeft: 8 }]}>Expiring Soon</Text>
-            </View>
-            <Text style={[styles.statValue, { color: colors['text.primary'] }]}>{certificateStats.expiringSoon.value}</Text>
-            <Text style={[styles.statChange, { color: colors['state.warning.fg'] }]}>{certificateStats.expiringSoon.change}</Text>
-          </Card>
-        </View>
-
-        {/* Recent Certificates */}
-        <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: colors['text.primary'] }]}>Certificats Récents</Text>
-          {recentCertificates.map(cert => (
-            <TouchableOpacity key={cert.id} onPress={() => router.push(`/certificate/${cert.id}`)}>
-              <Card style={styles.certCard}>
-                <View style={styles.certInfo}>
-                  <Text style={[styles.certStatus, { color: cert.status === 'Pending' ? colors['state.warning.fg'] : colors['state.success.fg'] }]}>
-                    {cert.status}
-                  </Text>
-                  <Text style={[styles.certName, { color: colors['text.primary'] }]}>{cert.name}</Text>
-                  <Text style={[styles.certIssuer, { color: colors['text.muted'] }]}>Issued by: {cert.issuer}</Text>
+        {loading ? (
+          <ActivityIndicator size="large" color={colors['brand.primary']} style={{ marginTop: 32 }} />
+        ) : (
+          <>
+            {/* Certificate Stats */}
+            <View style={styles.statsContainer}>
+              <Card style={styles.statCard}>
+                <View style={styles.statHeader}>
+                  <IconSymbol name="shield.fill" size={20} color={colors['brand.secondary']} />
+                  <Text style={[styles.statLabel, { color: colors['brand.secondary'], marginLeft: 8 }]}>Total Certificates</Text>
                 </View>
-                <Image source={{ uri: cert.image }} style={styles.certImage} />
+                <Text style={[styles.statValue, { color: colors['brand.secondary'] }]}>{stats.total.value}</Text>
+                <Text style={[styles.statChange, { color: colors['brand.secondary'] }]}>{stats.total.change}</Text>
               </Card>
-            </TouchableOpacity>
-          ))}
-        </View>
 
-        {/* Actions */}
-        <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: colors['text.primary'] }]}>Actions</Text>
-          <Button
-            title="Demander un certificat"
-            onPress={() => router.push('/CertificateFormScreen')}
-            variant="primary"
-          />
-          <Button
-            title="Vérifier un certificat"
-            onPress={() => router.push('/VerificationScreen')}
-            variant="secondary"
-            style={{ marginTop: 12 }}
-          />
-        </View>
+              <Card style={styles.statCard}>
+                <View style={styles.statHeader}>
+                  <IconSymbol name="checkmark.shield.fill" size={20} color={colors['state.success.fg']} />
+                  <Text style={[styles.statLabel, { color: colors['state.success.fg'], marginLeft: 8 }]}>Valid</Text>
+                </View>
+                <Text style={[styles.statValue, { color: colors['state.success.fg'] }]}>{stats.valid.value}</Text>
+                <Text style={[styles.statChange, { color: colors['state.success.fg'] }]}>{stats.valid.change}</Text>
+              </Card>
 
-        {/* Services Section */}
-        <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: colors['text.primary'] }]}>Services</Text>
-          {services.map(service => (
-            <Card key={service.id} style={styles.serviceCard}>
-              <View style={styles.serviceInfo}>
-                <Text style={[styles.serviceTitle, { color: colors['text.secondary'] }]}>{service.title}</Text>
-                <Text style={[styles.serviceName, { color: colors['text.primary'] }]}>{service.name}</Text>
-                <Text style={[styles.servicePrice, { color: colors['text.muted'] }]}>{`${service.priceSats} sats (~${service.priceFcfa} FCFA)`}</Text>
-                <TouchableOpacity style={[styles.orderButton, { backgroundColor: colors['surface.raised'] }]}>
-                  <Text style={[styles.orderButtonText, { color: colors['text.primary'] }]}>Order</Text>
+              <Card style={styles.statCard}>
+                <View style={styles.statHeader}>
+                  <IconSymbol name="hourglass" size={20} color={colors['state.warning.fg']} />
+                  <Text style={[styles.statLabel, { color: colors['state.warning.fg'], marginLeft: 8 }]}>Pending</Text>
+                </View>
+                <Text style={[styles.statValue, { color: colors['state.warning.fg'] }]}>{stats.pending.value}</Text>
+                <Text style={[styles.statChange, { color: colors['state.warning.fg'] }]}>{stats.pending.change}</Text>
+              </Card>
+
+              <Card style={styles.statCard}>
+                <View style={styles.statHeader}>
+                  <IconSymbol name="clock.fill" size={20} color={colors['state.error.fg']} />
+                  <Text style={[styles.statLabel, { color: colors['state.error.fg'], marginLeft: 8 }]}>Expiring Soon</Text>
+                </View>
+                <Text style={[styles.statValue, { color: colors['state.error.fg'] }]}>{stats.expiringSoon.value}</Text>
+                <Text style={[styles.statChange, { color: colors['state.error.fg'] }]}>{stats.expiringSoon.change}</Text>
+              </Card>
+            </View>
+
+            {/* Recent Certificates */}
+            <View style={styles.section}>
+              <Text style={[styles.sectionTitle, { color: colors['text.primary'] }]}>Certificats Récents</Text>
+              {recentCerts.map(cert => (
+                <TouchableOpacity key={cert.id} onPress={() => router.push(`/certificate/${cert.id}`)}>
+                  <Card style={styles.certCard}>
+                    <View style={styles.certInfo}>
+                      <Text style={[styles.certStatus, { color: cert.status === 'Pending' ? colors['state.warning.fg'] : colors['state.success.fg'] }]}>
+                        {cert.status}
+                      </Text>
+                      <Text style={[styles.certName, { color: colors['text.primary'] }]}>{cert.name}</Text>
+                      <Text style={[styles.certIssuer, { color: colors['text.muted'] }]}>Issued by: {cert.issuer}</Text>
+                      <Text style={[styles.certIssuer, { color: colors['text.muted'] }]}>{cert.date}</Text>
+                      <View style={{ marginTop: 8 }}>
+                        <Timeline steps={cert.timeline.steps} currentStep={cert.timeline.currentStep} />
+                      </View>
+                    </View>
+                    <Image source={{ uri: cert.image }} style={styles.certImage} />
+                  </Card>
                 </TouchableOpacity>
-              </View>
-              <Image source={{ uri: service.image }} style={styles.serviceImage} />
-            </Card>
-          ))}
-        </View>
+              ))}
+            </View>
+
+            {/* Actions */}
+            <View style={styles.section}>
+              <Text style={[styles.sectionTitle, { color: colors['text.primary'] }]}>Actions</Text>
+              <Button
+                title="Demander un certificat"
+                onPress={() => router.push('/CertificateFormScreen')}
+                variant="primary"
+              />
+              <Button
+                title="Vérifier un certificat"
+                onPress={() => router.push('/VerificationScreen')}
+                variant="secondary"
+                style={{ marginTop: 12 }}
+              />
+            </View>
+
+            {/* Services Section */}
+            <View style={styles.section}>
+              <Text style={[styles.sectionTitle, { color: colors['text.primary'] }]}>Services</Text>
+              {services.map(service => (
+                <Card key={service.id} style={styles.serviceCard}>
+                  <View style={styles.serviceInfo}>
+                    <Text style={[styles.serviceTitle, { color: colors['text.secondary'] }]}>{service.title}</Text>
+                    <Text style={[styles.serviceName, { color: colors['text.primary'] }]}>{service.name}</Text>
+                    <Text style={[styles.servicePrice, { color: colors['text.muted'] }]}>{`${service.priceSats} sats (~${service.priceFcfa} FCFA)`}</Text>
+                    <TouchableOpacity
+                      style={[styles.orderButton, { backgroundColor: colors['surface.raised'] }]}
+                      onPress={() => router.push({ pathname: '/order', params: { name: service.name, priceSats: service.priceSats, priceFcfa: service.priceFcfa } })}
+                    >
+                      <Text style={[styles.orderButtonText, { color: colors['text.primary'] }]}>Order</Text>
+                    </TouchableOpacity>
+                  </View>
+                  <Image source={{ uri: service.image }} style={styles.serviceImage} />
+                </Card>
+              ))}
+            </View>
+          </>
+        )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -152,11 +185,12 @@ const styles = StyleSheet.create({
   statsContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 24,
+    flexWrap: 'wrap',
+    marginBottom: 8, // Adjusted from 24
   },
   statCard: {
-    flex: 1,
-    marginHorizontal: 4,
+    width: '48%',
+    marginBottom: 16,
     padding: 16,
   },
   statHeader: {

@@ -5,8 +5,8 @@ import morgan from 'morgan';
 import dotenv from 'dotenv';
 
 // Import des routes
-import certificateRequestRoutes from './routes/certificateRequestRoutes.js';
-import userRoutes from './routes/userRoutes.js';
+import paymentRoutes from './routes/paymentRoutes.js';
+import certificateRoutes from './routes/certificateRoutes.js';
 
 // Configuration des variables d'environnement
 dotenv.config();
@@ -29,15 +29,15 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Routes API
-app.use('/api/certificate-requests', certificateRequestRoutes);
-app.use('/api/users', userRoutes);
+app.use('/api/payments', paymentRoutes);
+app.use('/api/certificates', certificateRoutes);
 
 // Route de santé
 app.get('/health', (req, res) => {
   res.json({
     status: 'OK',
     timestamp: new Date().toISOString(),
-    version: '1.0.0',
+    version: '1.0.0-minimal',
     environment: process.env.NODE_ENV || 'development'
   });
 });
@@ -45,14 +45,19 @@ app.get('/health', (req, res) => {
 // Route racine
 app.get('/', (req, res) => {
   res.json({
-    message: 'DioteKo API - Système de Certificats Numériques Sécurisés par Blockchain',
-    version: '1.0.0',
+    message: 'CertiFast API Minimal - Système de Certificats Numériques avec Lightning Network',
+    version: '1.0.0-minimal',
     endpoints: {
       health: '/health',
-      certificateRequests: '/api/certificate-requests',
-      users: '/api/users'
+      payments: '/api/payments',
+      certificates: '/api/certificates'
     },
-    documentation: '/docs'
+    features: [
+      'Paiements Lightning via LNbits',
+      'Génération de certificats',
+      'Vérification blockchain',
+      'API REST simple'
+    ]
   });
 });
 
@@ -77,11 +82,12 @@ app.use('*', (req, res) => {
 
 // Démarrage du serveur
 app.listen(PORT, () => {
-  console.log(`🚀 CertiFast API démarrée sur le port ${PORT}`);
+  console.log(`🚀 CertiFast API Minimal démarrée sur le port ${PORT}`);
   console.log(`📱 Frontend URL: ${process.env.FRONTEND_URL || 'http://localhost:8081'}`);
   console.log(`🔗 LNbits URL: ${process.env.LNBITS_URL || 'http://localhost:5000'}`);
   console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
   console.log(`📊 Health check: http://localhost:${PORT}/health`);
+  console.log(`💡 API Documentation: http://localhost:${PORT}/`);
 });
 
 export default app;

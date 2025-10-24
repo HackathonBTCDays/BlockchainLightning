@@ -1,325 +1,151 @@
-import React, { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  ActivityIndicator,
-  Alert,
-} from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-import { useAppContext } from '@/Provider/AppContext';
-import { createPaymentInvoice, checkPaymentStatus, generateCertificate } from '@/services/api';
-import { router, useRouter } from 'expo-router';
-const PaymentScreen = () => {
-  const navigation = useNavigation();
-  const router = useRouter();
-  const { selectedCertificateType, userData, setPaymentInfo, setCertificateInfo } = useAppContext();
-  const [loading, setLoading] = useState(false);
-  const [paymentRequest, setPaymentRequest] = useState(null);
-  const [paymentHash, setPaymentHash] = useState(null);
-  const [checking, setChecking] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+import React, { useState, useCallback } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useColorScheme } from '@/hooks/use-color-scheme';
+import { Colors } from '@/constants/theme';
+import { Card } from '@/components/ui/Card';
+import QRCode from 'react-native-qrcode-svg';
 
-  useEffect(() => {
-    createInvoice();
+const transactions = [
+  { id: '1', type: 'Received', amount: '50,000 sats', date: '2023-10-26' },
+  { id: '2', type: 'Sent', amount: '25,000 sats', date: '2023-10-25' },
+  { id: '3', type: 'Received', amount: '10,000 sats', date: '2023-10-24' },
+  { id: '4', type: 'Sent', amount: '5,000 sats', date: '2023-10-23' },
+];
+
+const PaymentScreen = () => {
+  const colorScheme = useColorScheme();
+  const colors = Colors[colorScheme ?? 'light'];
+  const [filter, setFilter] = useState('All');
+  const [refreshing, setRefreshing] = useState(false);
+
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+    // Simulate a network request
+    setTimeout(() => {
+      setRefreshing(false);
+    }, 2000);
   }, []);
 
-  const createInvoice = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const response = await createPaymentInvoice(
-
-        (selectedCertificateType as string as any).price,
-        (selectedCertificateType as string as any).id,
-        userData
-      );
-      setPaymentRequest(response.payment_request);
-      setPaymentHash(response.payment_hash);
-      setPaymentInfo(response);
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred';
-      setError(errorMessage);
-      Alert.alert('Error', errorMessage);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const startPaymentCheck = async () => {
-    if (!paymentHash) return;
-
-    setChecking(true);
-    const interval = setInterval(async () => {
-      try {
-        const status = await checkPaymentStatus(paymentHash);
-        if (status.paid) {
-          clearInterval(interval);
-          setChecking(false);
-          await handlePaymentSuccess();
-        }
-      } catch (err) {
-        console.error('Error checking payment:', err);
-      }
-    }, 3000); // Check every 3 seconds
-
-    // Stop checking after 5 minutes
-    setTimeout(() => {
-      clearInterval(interval);
-      if (checking) {
-        setChecking(false);
-        Alert.alert('Timeout', 'Payment check timed out. Please verify manually.');
-      }
-    }, 300000);
-  };
-
-  const handlePaymentSuccess = async () => {
-    try {
-      const certificate = await generateCertificate(
-        paymentHash,
-        userData,
-        (selectedCertificateType as any).id
-      );
-      setCertificateInfo(certificate);
-      Alert.alert('Success', 'Payment confirmed! Generating your certificate...', [
-        { text: 'OK', onPress: () => router.push('/PDFViewerScreen') },
-      ]);
-    } catch (err) {
-      Alert.alert('Error', 'Payment confirmed but certificate generation failed: ' + (err instanceof Error ? err.message : 'Unknown error'));
-    }
-  };
-
-  const handleScanQR = () => {
-    router.push({
-      pathname: '/QRScannerScreen',
-      params: { data: paymentRequest },
-    });
-  };
-
-  if (loading) {
-    return (
-      <View style={styles.container}>
-        <ActivityIndicator size="large" color="#f7931a" />
-        <Text style={styles.loadingText}>Creating payment invoice...</Text>
-      </View>
-    );
-  }
-
-  if (error) {
-    return (
-      <View style={styles.container}>
-        <Text style={styles.errorText}>Error: {error}</Text>
-        <TouchableOpacity style={styles.retryButton} onPress={createInvoice}>
-          <Text style={styles.retryButtonText}>Retry</Text>
-        </TouchableOpacity>
-      </View>
-    );
-  }
+  const filteredTransactions = transactions.filter(t => filter === 'All' || t.type === filter);
+  const filters = ['All', 'Received', 'Sent'];
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Payment</Text>
-        <Text style={styles.subtitle}>{(selectedCertificateType as any)?.name}</Text>
-      </View>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}>
+      <ScrollView
+        style={styles.container}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors['text.primary']} />}
+      >
+        <Text style={[styles.title, { color: colors['text.primary'] }]}>Payments</Text>
 
-      <View style={styles.content}>
-        <View style={styles.amountCard}>
-          <Text style={styles.amountLabel}>Amount Due</Text>
-          <Text style={styles.amountValue}>{(selectedCertificateType as any)?.price} sats</Text>
-        </View>
-
-        <View style={styles.invoiceCard}>
-          <Text style={styles.invoiceLabel}>Lightning Invoice</Text>
-          <View style={styles.invoiceBox}>
-            <Text style={styles.invoiceText} numberOfLines={3}>
-              {paymentRequest}
-            </Text>
+        <Card style={styles.qrCard}>
+          <Text style={[styles.qrTitle, { color: colors['text.primary'] }]}>Receive Payment</Text>
+          <View style={styles.qrContainer}>
+            <QRCode value="lightning:LNURL..." size={200} backgroundColor={colors.background} color={colors['text.primary']} />
           </View>
-        </View>
+          <Text style={[styles.qrSubtitle, { color: colors['text.secondary'] }]}>Scan this QR code to receive a payment.</Text>
+        </Card>
 
-        <TouchableOpacity style={styles.scanButton} onPress={handleScanQR}>
-          <Text style={styles.scanButtonText}>📱 Show QR Code</Text>
-        </TouchableOpacity>
-
-        {!checking ? (
-          <TouchableOpacity style={styles.checkButton} onPress={startPaymentCheck}>
-            <Text style={styles.checkButtonText}>Check Payment Status</Text>
-          </TouchableOpacity>
-        ) : (
-          <View style={styles.checkingContainer}>
-            <ActivityIndicator size="small" color="#f7931a" />
-            <Text style={styles.checkingText}>Waiting for payment...</Text>
+        <View style={styles.transactionsSection}>
+          <Text style={[styles.sectionTitle, { color: colors['text.primary'] }]}>Recent Transactions</Text>
+          <View style={styles.filterContainer}>
+            {filters.map(f => (
+              <TouchableOpacity
+                key={f}
+                style={[
+                  styles.filterButton,
+                  { backgroundColor: filter === f ? colors['brand.primary'] : colors['surface.default'] },
+                ]}
+                onPress={() => setFilter(f)}
+              >
+                <Text style={{ color: filter === f ? colors['brand.primary.on'] : colors['text.primary'] }}>{f}</Text>
+              </TouchableOpacity>
+            ))}
           </View>
-        )}
 
-        <View style={styles.instructionsCard}>
-          <Text style={styles.instructionsTitle}>How to pay:</Text>
-          <Text style={styles.instructionsText}>1. Tap "Show QR Code" above</Text>
-          <Text style={styles.instructionsText}>2. Scan with your Lightning wallet</Text>
-          <Text style={styles.instructionsText}>3. Confirm the payment</Text>
-          <Text style={styles.instructionsText}>4. Wait for confirmation</Text>
+          {filteredTransactions.map(t => (
+            <Card key={t.id} style={styles.transactionCard}>
+              <View>
+                <Text style={[styles.transactionType, { color: colors['text.primary'] }]}>{t.type}</Text>
+                <Text style={[styles.transactionDate, { color: colors['text.muted'] }]}>{t.date}</Text>
+              </View>
+              <Text style={[styles.transactionAmount, { color: t.type === 'Received' ? colors['state.success.fg'] : colors['state.error.fg'] }]}>
+                {t.type === 'Received' ? '+' : '-'}{t.amount}
+              </Text>
+            </Card>
+          ))}
         </View>
-      </View>
-    </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+  },
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
-  },
-  header: {
-    backgroundColor: '#f7931a',
-    padding: 20,
-    paddingTop: 40,
+    padding: 24,
   },
   title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#fff',
-    marginBottom: 5,
-  },
-  subtitle: {
-    fontSize: 14,
-    color: '#fff',
-    opacity: 0.9,
-  },
-  content: {
-    flex: 1,
-    padding: 16,
-  },
-  amountCard: {
-    backgroundColor: '#fff',
-    borderRadius: 8,
-    padding: 20,
-    marginBottom: 16,
-    alignItems: 'center',
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-  },
-  amountLabel: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 8,
-  },
-  amountValue: {
     fontSize: 32,
     fontWeight: 'bold',
-    color: '#f7931a',
+    marginBottom: 24,
   },
-  invoiceCard: {
-    backgroundColor: '#fff',
-    borderRadius: 8,
-    padding: 16,
-    marginBottom: 16,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-  },
-  invoiceLabel: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: 8,
-  },
-  invoiceBox: {
-    backgroundColor: '#f5f5f5',
-    borderRadius: 4,
-    padding: 12,
-  },
-  invoiceText: {
-    fontSize: 12,
-    fontFamily: 'monospace',
-    color: '#333',
-  },
-  scanButton: {
-    backgroundColor: '#f7931a',
-    padding: 16,
-    borderRadius: 8,
+  qrCard: {
     alignItems: 'center',
-    marginBottom: 12,
+    padding: 24,
+    marginBottom: 32,
   },
-  scanButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  checkButton: {
-    backgroundColor: '#333',
-    padding: 16,
-    borderRadius: 8,
-    alignItems: 'center',
+  qrTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
     marginBottom: 16,
   },
-  checkButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  checkingContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 16,
-    backgroundColor: '#fff',
-    borderRadius: 8,
+  qrContainer: {
     marginBottom: 16,
   },
-  checkingText: {
-    marginLeft: 12,
+  qrSubtitle: {
     fontSize: 16,
-    color: '#666',
-  },
-  instructionsCard: {
-    backgroundColor: '#fff',
-    borderRadius: 8,
-    padding: 16,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-  },
-  instructionsTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: 12,
-  },
-  instructionsText: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 6,
-  },
-  loadingText: {
-    marginTop: 16,
-    fontSize: 16,
-    color: '#666',
-  },
-  errorText: {
-    fontSize: 16,
-    color: '#ff0000',
     textAlign: 'center',
-    padding: 16,
   },
-  retryButton: {
-    backgroundColor: '#f7931a',
-    padding: 12,
+  transactionsSection: {
+    flex: 1,
+  },
+  sectionTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    marginBottom: 16,
+  },
+  filterContainer: {
+    flexDirection: 'row',
+    marginBottom: 16,
+  },
+  filterButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
     borderRadius: 8,
-    marginTop: 16,
+    marginRight: 8,
   },
-  retryButtonText: {
-    color: '#fff',
+  transactionCard: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+    marginBottom: 12,
+  },
+  transactionType: {
     fontSize: 16,
     fontWeight: '600',
+  },
+  transactionDate: {
+    fontSize: 14,
+    marginTop: 4,
+  },
+  transactionAmount: {
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });
 
