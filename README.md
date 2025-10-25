@@ -490,9 +490,9 @@ Clean, modular, documented code. Scalable architecture. Immediately deployable o
 - Email: [salifdiallo@esp.sn](mailto:salifdiallo@esp.sn)
 
 **Aicha Ndiaye** | Backend Developer
-- GitHub: [@AichaNdiaye](https://github.com/AichaNdiaye)
-- LinkedIn: [Aicha Ndiaye](https://www.linkedin.com/in/aicha-ndiaye/)
-- Email: [aicha.ndiaye@esp.sn](mailto:aicha.ndiaye@esp.sn)
+- GitHub: [@smiley100](https://github.com/smiley100)
+- LinkedIn: [Aicha Ndiaye](https://www.linkedin.com/in/ndiaye-a%C3%AFcha-72ba87331)
+- Email: [ndiayeaicha0928@gmail.com](mailto:ndiayeaicha0928@gmail.com)
 
 ---
 
