@@ -7,6 +7,7 @@ import { useRouter } from 'expo-router';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { IconSymbol } from '@/components/ui/icon-symbol';
+import { SelectiveShareModal } from '@/components/ui/SelectiveShareModal';
 
 // Mock data for demonstration
 const certificateStats = {
@@ -17,9 +18,9 @@ const certificateStats = {
 };
 
 const recentCertificates = [
-  { id: '1', name: 'Software Engineering Degree', issuer: 'Tech University', status: 'Verified', image: 'https://img.freepik.com/vecteurs-libre/certificat-luxe-dore-gradient_52683-70557.jpg?semt=ais_hybrid&w=740&q=80' },
-  { id: '2', name: 'Project Management Professional', issuer: 'Global PM Institute', status: 'Verified', image: 'https://img.freepik.com/vecteurs-libre/certificat-luxe-dore-gradient_52683-70557.jpg?semt=ais_hybrid&w=740&q=80' },
-  { id: '3', name: 'Data Science Certification', issuer: 'Data Academy', status: 'Pending', image: 'https://img.freepik.com/vecteurs-libre/certificat-luxe-dore-gradient_52683-70557.jpg?semt=ais_hybrid&w=740&q=80' },
+  { id: '1', name: 'Software Engineering Degree', issuer: 'Tech University', status: 'Verified', image: 'https://img.freepik.com/vecteurs-libre/certificat-luxe-dore-gradient_52683-70557.jpg?semt=ais_hybrid&w=740&q=80', ownerName: 'Aicha', birthDate: '2000-01-01', issueDate: '2023-06-15' },
+  { id: '2', name: 'Project Management Professional', issuer: 'Global PM Institute', status: 'Verified', image: 'https://img.freepik.com/vecteurs-libre/certificat-luxe-dore-gradient_52683-70557.jpg?semt=ais_hybrid&w=740&q=80', ownerName: 'Aicha', birthDate: '2000-01-01', issueDate: '2024-01-10' },
+  { id: '3', name: 'Data Science Certification', issuer: 'Data Academy', status: 'Pending', image: 'https://img.freepik.com/vecteurs-libre/certificat-luxe-dore-gradient_52683-70557.jpg?semt=ais_hybrid&w=740&q=80', ownerName: 'Aicha', birthDate: '2000-01-01', issueDate: '2024-03-22' },
 ];
 
 const services = [
@@ -31,6 +32,7 @@ const HomeScreen = () => {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
   const router = useRouter();
+  const [certToShare, setCertToShare] = React.useState<any>(null);
 
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}>
@@ -89,6 +91,14 @@ const HomeScreen = () => {
                   </Text>
                   <Text style={[styles.certName, { color: colors['text.primary'] }]}>{cert.name}</Text>
                   <Text style={[styles.certIssuer, { color: colors['text.muted'] }]}>Issued by: {cert.issuer}</Text>
+                  {cert.status === 'Verified' && (
+                    <TouchableOpacity 
+                      style={{ marginTop: 8, backgroundColor: '#e8f4f8', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 6, alignSelf: 'flex-start' }}
+                      onPress={(e) => { e.stopPropagation(); setCertToShare(cert); }}
+                    >
+                      <Text style={{ color: '#0a7ea4', fontSize: 13, fontWeight: 'bold' }}>Partager Sécurisé</Text>
+                    </TouchableOpacity>
+                  )}
                 </View>
                 <Image source={{ uri: cert.image }} style={styles.certImage} />
               </Card>
@@ -130,6 +140,13 @@ const HomeScreen = () => {
           ))}
         </View>
       </ScrollView>
+
+      {/* Modale de partage sélectif */}
+      <SelectiveShareModal 
+        visible={!!certToShare} 
+        certificate={certToShare} 
+        onClose={() => setCertToShare(null)} 
+      />
     </SafeAreaView>
   );
 };
