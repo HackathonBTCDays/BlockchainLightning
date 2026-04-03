@@ -9,8 +9,8 @@ export const useAuthCapture = () => {
    * Lance la capture Biométrique native
    * Ton camarade va appeler: const bioResult = await requestBiometrics()
    */
-  const requestBiometrics = async (promptMessage?: string) => {
-    return await biometricService.promptBiometricScan(promptMessage);
+  const requestBiometrics = async () => {
+    return await biometricService.promptBiometricScan();
   };
 
   /**
