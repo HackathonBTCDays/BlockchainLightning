@@ -1,18 +1,20 @@
 const express = require('express');
 const router = express.Router();
-const lnbits = require('../services/lnbits');
+const fiatPayment = require('../services/fiatPayment');
 const pdf = require('../services/pdf');
 const bitcoin = require('../services/bitcoin');
 const { v4: uuidv4 } = require('uuid');
 
 router.post('/', async (req, res) => {
   try {
-    const { name, birthDate, type, preimage } = req.body;
+    const { name, birthDate, type, transactionId } = req.body;
     
-    // 1. Vérifier paiement
-    const paid = await lnbits.verifyPayment(preimage);
-    if (!paid) {
-      return res.status(400).json({ error: 'Paiement non trouvé' });
+    // 1. Vérifier la gratuité et le paiement bancaire / mobile
+    if (!fiatPayment.isFreeDocument(type)) {
+      const paid = await fiatPayment.verifyPayment(transactionId);
+      if (!paid) {
+        return res.status(400).json({ error: 'Paiement requis ou transaction introuvable' });
+      }
     }
     
     // 2. Générer ID unique
